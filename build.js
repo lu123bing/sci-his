@@ -30,6 +30,33 @@ let navigationHtml = '';
 let searchIndex = [];
 const pages = [];
 
+const emojiMap = {
+  '科学与文明史概论复习笔记': '📖',
+  '总纲': '📌',
+  '第01讲 为什么要学历史？如何是科学史与文明史？': '⏳🧠',
+  '第02讲 史前技术与希腊思想': '🔥🏺',
+  '第03讲 希腊与希腊化：科学的起点': '🏛️🦉',
+  '第04讲 从希腊到罗马': '⚔️🛡️',
+  '第05讲 文明的三个前提：大交汇的世界格局': '🌍🧭',
+  '第06讲 中国古代科学与李约瑟问题': '🐉📜',
+  '第07讲 从文艺复兴到科学革命': '🎨🔭',
+  '第08讲 从伽利略到牛顿：大自然的数学化': '🍎📐',
+  '第09讲 工业革命与工业文明': '🚂🏭',
+  '第10讲 化学、化工、化肥、土壤、食物（一）': '🧪🌾',
+  '第11讲 化学、化工、化肥、土壤、食物（二）': '🥖🧬',
+  '人物速背表': '👤',
+  '时间线速背': '⏳',
+  '简答题模板': '📝',
+  '最后冲刺：十个必背判断': '🎯',
+  '《科学与文明史概论》课堂小测题整理与期末复习扩展版': '📋',
+  '一、总复习框架': '🗂️',
+  '3_03：为什么学历史、人文社科要求与价值观': '🏛️💡',
+  '3_17：史前文明、希腊思想与希腊化科学': '🏺✨',
+  '4_07：中国古代科学、李约瑟问题与技术文明': '🐉⚙️',
+  '4_21：科学革命、伽利略、牛顿与机械自然观': '🔭⚙️',
+  '最后一次：科学主义、化学、农业、环境伦理': '🧪🌱'
+};
+
 for (const sourceFile of filesToProcess) {
   const content = fs.readFileSync(path.join(__dirname, sourceFile.file), 'utf-8');
   
@@ -65,8 +92,13 @@ for (const sourceFile of filesToProcess) {
     // First part: intro / before first <h3>
     let introText = "";
     if (parts[0] && parts[0].trim().length > 0) {
-      masonryHtml += `<div class="card intro-card"><div class="card-body">${parts[0]}</div></div>`;
-      introText = parts[0].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+      let introHtml = parts[0];
+      const emoji = emojiMap[title] || '';
+      if (emoji) {
+        introHtml = introHtml.replace(/(<h[12][^>]*>)/i, `$1<span class="grid-emoji" style="font-size: 1.2em; margin-right: 8px;">${emoji}</span> `);
+      }
+      masonryHtml += `<div class="card intro-card"><div class="card-body">${introHtml}</div></div>`;
+      introText = introHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
     }
 
     const isQuiz = sourceFile.name.includes('课堂小测');
