@@ -12,18 +12,21 @@
       <div class="sidebar-header">
         <h2>复习导航</h2>
       </div>
-      <div class="search-box sticky-search">
-        <input type="text" id="search-input" placeholder="搜索知识点...">
-        <div id="search-results" class="search-results hidden"></div>
-      </div>
+      
       <ul class="nav-links">
         {{NAVIGATION}}
       </ul>
     </nav>
     <main class="content">
       <div class="top-toolbar">
-         <h1 class="page-title">{{TITLE}}</h1>
-         <div class="toolbar-actions">
+         <div class="toolbar-left" style="display: flex; align-items: center; flex: 1;">
+           <button id="sidebar-toggle" class="btn btn-outline" style="margin-right: 20px; margin-left: 0; flex-shrink: 0; padding: 8px 12px; font-weight: bold; border-color: var(--border); color: var(--text-muted);">☰ 目录</button>
+           <div class="search-box relative-search">
+             <input type="text" id="search-input" placeholder="搜索知识点...">
+             <div id="search-results" class="search-results hidden"></div>
+           </div>
+         </div>
+         <div class="toolbar-actions" style="margin-left: 20px; flex-shrink: 0;">
            <button class="btn" onclick="window.toggleDetails(true)">展开全部</button>
            <button class="btn btn-outline" onclick="window.toggleDetails(false)">折叠全部</button>
          </div>

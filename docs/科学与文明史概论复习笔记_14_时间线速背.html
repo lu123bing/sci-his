@@ -12,18 +12,21 @@
       <div class="sidebar-header">
         <h2>复习导航</h2>
       </div>
-      <div class="search-box sticky-search">
-        <input type="text" id="search-input" placeholder="搜索知识点...">
-        <div id="search-results" class="search-results hidden"></div>
-      </div>
+      
       <ul class="nav-links">
         <div class="nav-category">📖 知识点复习</div><li><a href="科学与文明史概论复习笔记_0_科学与文明史概论复习笔记.html">科学与文明史概论复习笔记</a></li><li><a href="科学与文明史概论复习笔记_1_总纲.html">总纲</a></li><li><a href="科学与文明史概论复习笔记_2_第01讲_为什么要学历史？如何是科学史与文明史？.html"><strong>第01讲</strong> 为什么要学历史？如何是科学史与文明史？</a></li><li><a href="科学与文明史概论复习笔记_3_第02讲_史前技术与希腊思想.html"><strong>第02讲</strong> 史前技术与希腊思想</a></li><li><a href="科学与文明史概论复习笔记_4_第03讲_希腊与希腊化：科学的起点.html"><strong>第03讲</strong> 希腊与希腊化：科学的起点</a></li><li><a href="科学与文明史概论复习笔记_5_第04讲_从希腊到罗马.html"><strong>第04讲</strong> 从希腊到罗马</a></li><li><a href="科学与文明史概论复习笔记_6_第05讲_文明的三个前提：大交汇的世界格局.html"><strong>第05讲</strong> 文明的三个前提：大交汇的世界格局</a></li><li><a href="科学与文明史概论复习笔记_7_第06讲_中国古代科学与李约瑟问题.html"><strong>第06讲</strong> 中国古代科学与李约瑟问题</a></li><li><a href="科学与文明史概论复习笔记_8_第07讲_从文艺复兴到科学革命.html"><strong>第07讲</strong> 从文艺复兴到科学革命</a></li><li><a href="科学与文明史概论复习笔记_9_第08讲_从伽利略到牛顿：大自然的数学化.html"><strong>第08讲</strong> 从伽利略到牛顿：大自然的数学化</a></li><li><a href="科学与文明史概论复习笔记_10_第09讲_工业革命与工业文明.html"><strong>第09讲</strong> 工业革命与工业文明</a></li><li><a href="科学与文明史概论复习笔记_11_第10讲_化学、化工、化肥、土壤、食物（一）.html"><strong>第10讲</strong> 化学、化工、化肥、土壤、食物（一）</a></li><li><a href="科学与文明史概论复习笔记_12_第11讲_化学、化工、化肥、土壤、食物（二）.html"><strong>第11讲</strong> 化学、化工、化肥、土壤、食物（二）</a></li><li><a href="科学与文明史概论复习笔记_13_人物速背表.html">人物速背表</a></li><li><a href="科学与文明史概论复习笔记_14_时间线速背.html" class="active">时间线速背</a></li><li><a href="科学与文明史概论复习笔记_15_简答题模板.html">简答题模板</a></li><li><a href="科学与文明史概论复习笔记_16_最后冲刺：十个必背判断.html">最后冲刺：十个必背判断</a></li><div class="nav-category">📝 小测与扩展</div><li><a href="课堂小测整理扩展版_0_《科学与文明史概论》课堂小测题整理与期末复习扩展版.html">《科学与文明史概论》课堂小测题整理与期末复习扩展版</a></li><li><a href="课堂小测整理扩展版_1_一、总复习框架.html">一、总复习框架</a></li><li><a href="课堂小测整理扩展版_2_3_03：为什么学历史、人文社科要求与价值观.html"><strong>3_03</strong>：为什么学历史、人文社科要求与价值观</a></li><li><a href="课堂小测整理扩展版_3_3_17：史前文明、希腊思想与希腊化科学.html"><strong>3_17</strong>：史前文明、希腊思想与希腊化科学</a></li><li><a href="课堂小测整理扩展版_4_4_07：中国古代科学、李约瑟问题与技术文明.html"><strong>4_07</strong>：中国古代科学、李约瑟问题与技术文明</a></li><li><a href="课堂小测整理扩展版_5_4_21：科学革命、伽利略、牛顿与机械自然观.html"><strong>4_21</strong>：科学革命、伽利略、牛顿与机械自然观</a></li><li><a href="课堂小测整理扩展版_6_最后一次：科学主义、化学、农业、环境伦理.html">最后一次：科学主义、化学、农业、环境伦理</a></li>
       </ul>
     </nav>
     <main class="content">
       <div class="top-toolbar">
-         <h1 class="page-title">时间线速背</h1>
-         <div class="toolbar-actions">
+         <div class="toolbar-left" style="display: flex; align-items: center; flex: 1;">
+           <button id="sidebar-toggle" class="btn btn-outline" style="margin-right: 20px; margin-left: 0; flex-shrink: 0; padding: 8px 12px; font-weight: bold; border-color: var(--border); color: var(--text-muted);">☰ 目录</button>
+           <div class="search-box relative-search">
+             <input type="text" id="search-input" placeholder="搜索知识点...">
+             <div id="search-results" class="search-results hidden"></div>
+           </div>
+         </div>
+         <div class="toolbar-actions" style="margin-left: 20px; flex-shrink: 0;">
            <button class="btn" onclick="window.toggleDetails(true)">展开全部</button>
            <button class="btn btn-outline" onclick="window.toggleDetails(false)">折叠全部</button>
          </div>

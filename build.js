@@ -80,7 +80,7 @@ for (const sourceFile of filesToProcess) {
       if (h3Text.includes('核心句')) classes.push('core-card');
       if (h3Text.includes('时间线')) classes.push('timeline-card');
 
-      const defaultOpen = isQuiz ? '' : 'open';
+      const defaultOpen = 'open';
       masonryHtml += `
         <details class="${classes.join(' ')}" ${defaultOpen}>
           <summary class="card-header">${h3}</summary>
