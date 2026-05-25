@@ -223,6 +223,7 @@ function initNavigation() {
   if(toggleBtn) {
     toggleBtn.addEventListener('click', () => {
       document.querySelector('.sidebar').classList.toggle('collapsed');
+      if (window.applyDynamicLayout) window.applyDynamicLayout();
     });
   }
   const sidebar = document.querySelector('.sidebar');
@@ -295,6 +296,8 @@ async function navigateTo(href) {
         }
       }, 50);
     }
+    
+    if (window.applyDynamicLayout) window.applyDynamicLayout();
   } catch (err) {
     window.location.href = href;
   } finally {
@@ -313,3 +316,95 @@ if (document.readyState === 'loading') {
 } else {
   initNavigation();
 }
+
+window.applyDynamicLayout = function() {
+  const container = document.querySelector('.masonry-grid');
+  if (!container) return;
+  const cards = Array.from(container.querySelectorAll('.card'));
+  if (cards.length === 0) return;
+
+  const ww = window.innerWidth;
+  const sideCollapsed = document.querySelector('.sidebar')?.classList.contains('collapsed');
+  
+  let cols = 1;
+  if (sideCollapsed) {
+    if (ww >= 2200) cols = 5;
+    else if (ww >= 1600) cols = 4;
+    else if (ww >= 1000) cols = 3;
+    else cols = 2;
+  } else {
+    if (ww >= 2200) cols = 4;
+    else if (ww >= 1600) cols = 3;
+    else if (ww >= 1000) cols = 2;
+  }
+
+  if (cols === 1 || cards.length < 2) {
+    cards.forEach(c => c.style.width = '100%');
+    return;
+  }
+
+  const levels = [0.5, 0.75, 1, 1.25, 1.5];
+
+  if (!container.dataset.lengthsCached) {
+    cards.forEach(c => {
+      const body = c.querySelector('.card-body');
+      c.dataset.len = body ? body.textContent.trim().length : c.textContent.trim().length;
+    });
+    container.dataset.lengthsCached = "true";
+  }
+
+  const cardLengths = cards.map(c => parseInt(c.dataset.len, 10) || 1);
+
+  for (let i = 0; i < cards.length; i += cols) {
+    const rowCards = cards.slice(i, i + cols);
+    const rowLengths = cardLengths.slice(i, i + cols);
+    const actualColsInRow = rowCards.length;
+    
+    if (actualColsInRow < cols) {
+       const fraction = 1 / cols;
+       rowCards.forEach(card => {
+         card.style.width = `calc(${fraction * 100}% - ${24 * (cols - 1) * fraction}px)`;
+       });
+       continue;
+    }
+
+    const meanLen = rowLengths.reduce((a,b)=>a+b, 0) / actualColsInRow;
+    const chosenLevels = rowLengths.map(len => {
+      const ratio = len / meanLen;
+      let bestLevel = levels[0];
+      let minDiff = Math.abs(ratio - levels[0]);
+      for (const level of levels) {
+        const diff = Math.abs(ratio - level);
+        if (diff < minDiff) {
+          bestLevel = level;
+          minDiff = diff;
+        }
+      }
+      return bestLevel;
+    });
+
+    const sumLevels = chosenLevels.reduce((a,b)=>a+b, 0);
+
+    rowCards.forEach((card, j) => {
+      const fraction = chosenLevels[j] / sumLevels;
+      card.style.width = `calc(${fraction * 100}% - ${24 * (actualColsInRow - 1) * fraction}px)`;
+    });
+  }
+};
+
+let resizeTimeout;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimeout);
+  resizeTimeout = setTimeout(() => {
+    if (window.applyDynamicLayout) window.applyDynamicLayout();
+  }, 100);
+});
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    if (window.applyDynamicLayout) window.applyDynamicLayout();
+  });
+} else {
+  if (window.applyDynamicLayout) window.applyDynamicLayout();
+}
+

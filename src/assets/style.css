@@ -137,21 +137,18 @@ body {
 
 /* Masonry Grid */
 .masonry-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  align-items: start;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
   gap: 24px;
 }
 
-@media (min-width: 1000px) { .masonry-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (min-width: 1600px) { .masonry-grid { grid-template-columns: repeat(3, 1fr); } }
-@media (min-width: 2200px) { .masonry-grid { grid-template-columns: repeat(4, 1fr); } }
+.masonry-grid > .card {
+  width: 100%; /* Default mobile */
+}
 
-/* Force +1 column when sidebar is collapsed */
-.container:has(.sidebar.collapsed) .masonry-grid { grid-template-columns: repeat(2, 1fr); }
-@media (min-width: 1000px) { .container:has(.sidebar.collapsed) .masonry-grid { grid-template-columns: repeat(3, 1fr); } }
-@media (min-width: 1600px) { .container:has(.sidebar.collapsed) .masonry-grid { grid-template-columns: repeat(4, 1fr); } }
-@media (min-width: 2200px) { .container:has(.sidebar.collapsed) .masonry-grid { grid-template-columns: repeat(5, 1fr); } }
+/* Note: we rely on JS to calculate width dynamically to balance heights,
+   but we still provide fallback full-width here. */
 
 
 /* Card Styling */
