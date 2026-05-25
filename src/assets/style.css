@@ -88,6 +88,16 @@ body {
 .search-result-item:hover, .search-result-item.selected { background: var(--bg-color); border-left: 3px solid var(--primary); }
 .search-result-title { font-weight: 600; font-size: 0.9em; margin-bottom: 4px; }
 .search-result-text { font-size: 0.85em; color: var(--text-muted); }
+.search-result-grid {
+  font-size: 0.85rem;
+  margin-top: 4px;
+  padding-left: 10px;
+  border-left: 2px solid var(--primary);
+  color: var(--text-muted);
+}
+.search-result-grid strong {
+  color: var(--text-main);
+}
 
 .nav-links {
   overflow-y: auto; flex: 1;
@@ -211,6 +221,10 @@ details.card summary:hover { background: #f1f5f9; }
 mark {
   background-color: #fef08a; padding: 0 2px;
   border-radius: 3px; font-weight: bold;
+}
+mark.partial-match {
+  background-color: rgba(254, 240, 138, 0.4);
+  font-weight: normal;
 }
 
 /* Underline for secondary keywords */

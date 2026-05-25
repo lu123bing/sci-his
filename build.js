@@ -61,9 +61,12 @@ for (const sourceFile of filesToProcess) {
     
     let masonryHtml = '<div class="masonry-grid">';
     
+    const grids = [];
     // First part: intro / before first <h3>
+    let introText = "";
     if (parts[0] && parts[0].trim().length > 0) {
       masonryHtml += `<div class="card intro-card"><div class="card-body">${parts[0]}</div></div>`;
+      introText = parts[0].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
     }
 
     const isQuiz = sourceFile.name.includes('课堂小测');
@@ -71,7 +74,10 @@ for (const sourceFile of filesToProcess) {
     for (let i = 1; i < parts.length; i += 2) {
       const h3 = parts[i];
       const contentParts = parts[i + 1] || '';
-      const h3Text = h3.replace(/<[^>]+>/g, '');
+      const h3Text = h3.replace(/<[^>]+>/g, '').trim();
+      const plainContent = contentParts.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+      
+      grids.push({ h3: h3Text, content: plainContent });
 
       let classes = ['card'];
       if (isQuiz) classes.push('quiz-card');
@@ -95,24 +101,20 @@ for (const sourceFile of filesToProcess) {
       filename,
       sourceName: sourceFile.name,
       url,
-      markdownContent: section // for search indexing
+      intro: introText,
+      grids: grids
     });
   });
 }
 
 // Process search index
 pages.forEach(page => {
-  const paragraphs = page.markdownContent.split(/\n\s*\n/);
-  paragraphs.forEach((p, pIdx) => {
-    const text = p.replace(/#+\s+/g, '').replace(/[*_`>]/g, '').trim();
-    if (text.length > 5) {
-      searchIndex.push({
-        source: page.sourceName,
-        title: page.title,
-        text: text,
-        url: page.url
-      });
-    }
+  searchIndex.push({
+    source: page.sourceName,
+    title: page.title,
+    url: page.url,
+    intro: page.intro,
+    grids: page.grids
   });
 });
 

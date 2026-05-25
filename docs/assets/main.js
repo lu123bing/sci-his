@@ -28,41 +28,113 @@
     currentFocus = -1;
     const query = e.target.value.trim().toLowerCase();
     
-    if (query.length === 0) {
+    const keywords = query.split(/\s+/).filter(k => k.length > 0);
+    
+    if (keywords.length === 0) {
       searchResults.innerHTML = '';
       searchResults.classList.add('hidden');
       return;
     }
 
     const matches = [];
-    for (const item of searchIndex) {
-      if (item.text.toLowerCase().includes(query) || item.title.toLowerCase().includes(query)) {
-        matches.push(item);
+    const getHitCountStr = (text, q) => {
+      if (!text) return 0;
+      return (text.toLowerCase().match(new RegExp(escapeRegExp(q), 'g')) || []).length;
+    };
+    const getHitCount = (text) => keywords.reduce((sum, k) => sum + getHitCountStr(text, k), 0);
+
+    for (const section of searchIndex) {
+      let sectionHits = 0;
+      let matchedGrids = [];
+      
+      const titleMatchesAll = keywords.every(k => section.title.toLowerCase().includes(k));
+      const titleHits = titleMatchesAll ? getHitCount(section.title) : 0;
+      
+      const introText = section.intro || '';
+      const introMatchesAll = keywords.every(k => introText.toLowerCase().includes(k));
+      const introHits = introMatchesAll ? getHitCount(introText) : 0;
+      if (introHits > 0) sectionHits += introHits;
+      
+      if (section.grids) {
+        for (const grid of section.grids) {
+          const gridText = (grid.h3 + " " + grid.content).toLowerCase();
+          const gridMatchesAll = keywords.every(k => gridText.includes(k));
+          if (gridMatchesAll) {
+            const h3Hits = getHitCount(grid.h3);
+            const contentHits = getHitCount(grid.content);
+            sectionHits += h3Hits + contentHits;
+            matchedGrids.push(grid);
+          }
+        }
       }
-      if (matches.length >= 20) break;
+      
+      sectionHits += titleHits;
+      
+      if (titleMatchesAll || introMatchesAll || matchedGrids.length > 0) {
+        matches.push({
+          section: section,
+          score: sectionHits,
+          titleHits: titleHits,
+          introMatched: introMatchesAll,
+          matchedGrids: matchedGrids
+        });
+      }
     }
 
-    if (matches.length === 0) {
+    matches.sort((a, b) => b.score - a.score);
+    const topMatches = matches.slice(0, 15);
+
+    if (topMatches.length === 0) {
       searchResults.innerHTML = '<div class="search-result-item"><span class="search-result-text">无结果</span></div>';
     } else {
-      searchResults.innerHTML = matches.map(item => {
-        const regex = new RegExp(`(${escapeRegExp(query)})`, 'gi');
+      searchResults.innerHTML = topMatches.map(item => {
+        const regexStr = keywords.map(escapeRegExp).join('|');
+        const regex = new RegExp(`(${regexStr})`, 'gi');
         
-        let matchIndex = item.text.toLowerCase().indexOf(query);
-        let excerpt = item.text;
-        if (matchIndex !== -1) {
-            let start = Math.max(0, matchIndex - 25);
-            let end = Math.min(item.text.length, matchIndex + query.length + 25);
-            excerpt = (start > 0 ? '...' : '') + item.text.substring(start, end) + (end < item.text.length ? '...' : '');
+        let sectionTitle = item.section.title.replace(regex, '<mark>$1</mark>');
+        let innerHtml = '';
+        
+        const firstMatchIdx = (text) => {
+          let minIdx = -1;
+          for (let k of keywords) {
+            let idx = (text || "").toLowerCase().indexOf(k);
+            if (idx !== -1 && (minIdx === -1 || idx < minIdx)) {
+              minIdx = idx;
+            }
+          }
+          return minIdx;
+        };
+
+        if (item.introMatched) {
+           let idx = firstMatchIdx(item.section.intro);
+           let start = Math.max(0, idx - 20);
+           let end = Math.min(item.section.intro.length, idx + 40);
+           let excerpt = (start > 0 ? '...' : '') + item.section.intro.substring(start, end) + (end < item.section.intro.length ? '...' : '');
+           innerHtml += `<div class="search-result-grid"><div class="search-result-text"><em>[前言]</em> ${excerpt.replace(regex, '<mark>$1</mark>')}</div></div>`;
         }
         
-        const highlightedText = excerpt.replace(regex, '<mark>$1</mark>');
-        const highlightedTitle = item.title.replace(regex, '<mark>$1</mark>');
+        item.matchedGrids.forEach(grid => {
+           let h3 = grid.h3.replace(regex, '<mark>$1</mark>');
+           let idx = firstMatchIdx(grid.content);
+           let excerpt = grid.content;
+           if (idx !== -1) {
+              let start = Math.max(0, idx - 20);
+              let end = Math.min(grid.content.length, idx + 40);
+              excerpt = (start > 0 ? '...' : '') + grid.content.substring(start, end) + (end < grid.content.length ? '...' : '');
+           } else {
+              excerpt = grid.content.substring(0, 40) + (grid.content.length > 40 ? '...' : '');
+           }
+           innerHtml += `<div class="search-result-grid"><strong>${h3}</strong>: <span class="search-result-text">${excerpt.replace(regex, '<mark>$1</mark>')}</span></div>`;
+        });
+
+        if (item.matchedGrids.length === 0 && !item.introMatched && item.titleHits > 0) {
+          innerHtml += `<div class="search-result-grid"><span class="search-result-text">标题匹配，但无便签命中。</span></div>`;
+        }
         
         return `
-          <a href="${item.url}?highlight=${encodeURIComponent(query)}" class="search-result-item">
-            <div class="search-result-title">${item.source} - ${highlightedTitle}</div>
-            <div class="search-result-text">${highlightedText}</div>
+          <a href="${item.section.url}?highlight=${encodeURIComponent(query)}" class="search-result-item">
+            <div class="search-result-title">${item.section.source} - ${sectionTitle} <em><small>(${item.score}处匹配)</small></em></div>
+            ${innerHtml}
           </a>
         `;
       }).join('');
@@ -138,7 +210,11 @@
 
   window.highlightTextInDOM = function highlightTextInDOM(node, query) {
     if (!query) return;
-    const regex = new RegExp(`(${escapeRegExp(query)})`, 'gi');
+    const keywords = query.split(/\s+/).filter(k => k.length > 0);
+    if (keywords.length === 0) return;
+    const regexStr = keywords.map(escapeRegExp).join('|');
+    const regex = new RegExp(`(${regexStr})`, 'gi');
+    const testRegex = new RegExp(`(${regexStr})`, 'i');
     
     const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT, null, false);
     const nodesToReplace = [];
@@ -146,22 +222,42 @@
     let currentNode;
     while (currentNode = walker.nextNode()) {
       if (currentNode.parentNode && currentNode.parentNode.nodeName === 'MARK') continue;
-      if (regex.test(currentNode.nodeValue)) {
+      if (testRegex.test(currentNode.nodeValue)) {
         nodesToReplace.push(currentNode);
       }
     }
     
+    const cardMatches = new Map();
+
     nodesToReplace.forEach(textNode => {
+      const parentCard = textNode.parentNode.closest ? textNode.parentNode.closest('.card') : null;
+      let matchesAll = false;
+      if (parentCard) {
+         if (cardMatches.has(parentCard)) {
+            matchesAll = cardMatches.get(parentCard);
+         } else {
+            const cardText = parentCard.textContent.toLowerCase();
+            matchesAll = keywords.every(k => cardText.includes(k));
+            cardMatches.set(parentCard, matchesAll);
+         }
+      } else {
+         matchesAll = keywords.every(k => node.textContent.toLowerCase().includes(k));
+      }
+      
       const matchText = textNode.nodeValue;
       const span = document.createElement('span');
-      span.innerHTML = matchText.replace(regex, '<mark>$1</mark>');
+      if (matchesAll) {
+         span.innerHTML = matchText.replace(regex, '<mark>$1</mark>');
+      } else {
+         span.innerHTML = matchText.replace(regex, '<mark class="partial-match">$1</mark>');
+      }
       textNode.parentNode.replaceChild(span, textNode);
     });
     
     // Auto-expand enclosing details cards & Scroll
-    const firstMark = node.querySelector('mark');
+    const firstMark = node.querySelector('mark:not(.partial-match)') || node.querySelector('mark');
     if (firstMark) {
-      document.querySelectorAll('mark').forEach(mark => {
+      document.querySelectorAll('mark:not(.partial-match)').forEach(mark => {
         const parentDetail = mark.closest('details');
         if (parentDetail) {
           parentDetail.setAttribute('open', '');
