@@ -8,22 +8,22 @@ const SRC_DIR = path.join(__dirname, 'src');
 const TEMPLATE_PATH = path.join(SRC_DIR, 'template.html');
 
 // Create docs dir if not exists
-if (!fs.existsSync(path.join(__dirname, 'docs'))) {
-  fs.mkdirSync(path.join(__dirname, 'docs'), { recursive: true });
+if (!fs.existsSync(DOCS_DIR)) {
+  fs.mkdirSync(DOCS_DIR, { recursive: true });
 }
-if (!fs.existsSync(path.join(__dirname, 'docs', 'assets'))) {
-  fs.mkdirSync(path.join(__dirname, 'docs', 'assets'), { recursive: true });
+if (!fs.existsSync(path.join(DOCS_DIR, 'assets'))) {
+  fs.mkdirSync(path.join(DOCS_DIR, 'assets'), { recursive: true });
 }
 
 // Copy assets
-fs.copyFileSync(path.join(SRC_DIR, 'assets', 'style.css'), path.join(__dirname, 'docs', 'assets', 'style.css'));
-fs.copyFileSync(path.join(SRC_DIR, 'assets', 'search.js'), path.join(__dirname, 'docs', 'assets', 'search.js'));
+fs.copyFileSync(path.join(SRC_DIR, 'assets', 'style.css'), path.join(DOCS_DIR, 'assets', 'style.css'));
+fs.copyFileSync(path.join(SRC_DIR, 'assets', 'main.js'), path.join(DOCS_DIR, 'assets', 'main.js'));
 
 const template = fs.readFileSync(TEMPLATE_PATH, 'utf-8');
 
 const filesToProcess = [
-  { name: '科学与文明史概论复习笔记', file: '科学与文明史概论复习笔记.md' },
-  { name: '课堂小测整理扩展版', file: '科学与文明史概论_课堂小测整理扩展版.md' }
+  { name: '科学与文明史概论复习笔记', file: '科学与文明史概论复习笔记.md', shortName: '📖 知识点复习' },
+  { name: '课堂小测整理扩展版', file: '科学与文明史概论_课堂小测整理扩展版.md', shortName: '📝 小测与扩展' }
 ];
 
 let navigationHtml = '';
@@ -33,31 +33,65 @@ const pages = [];
 for (const sourceFile of filesToProcess) {
   const content = fs.readFileSync(path.join(__dirname, sourceFile.file), 'utf-8');
   
-  // Split by "## " (Level 2 heading)
-  // But wait, the first part might be just "# Title", so let's split from the start or before ##
   const sections = content.split(/\n(?=## )/);
   
-  navigationHtml += `<div class="nav-category">${sourceFile.name}</div>`;
+  // Neat nav category name
+  navigationHtml += `<div class="nav-category">${sourceFile.shortName}</div>`;
   
   sections.forEach((section, index) => {
     let title = '前言/导言';
-    
-    // Extact title
     const match = section.match(/^#+\s+(.*)/);
     if (match) {
       title = match[1].trim();
     }
     
-    // create a safe filename
     const safeTitle = title.replace(/[\/\\:*?"<>|]/g, '').replace(/\s+/g, '_');
     const filename = `${sourceFile.name}_${index}_${safeTitle}.html`;
     const url = filename;
     
-    navigationHtml += `<li><a href="${url}">${title}</a></li>`;
+    // Tweak to look neater (e.g. bolded numbers if available)
+    const neatTitle = title.replace(/^(第\d+讲|\d+\_\d+)/, '<strong>$1</strong>');
+    navigationHtml += `<li><a href="${url}">${neatTitle}</a></li>`;
     
+    // Parse markdown into HTML
+    const rawHtmlContent = marked.parse(section);
+
+    // Split by <h3> tags
+    const parts = rawHtmlContent.split(/(<h3[^>]*>[\s\S]*?<\/h3>)/gi);
+    
+    let masonryHtml = '<div class="masonry-grid">';
+    
+    // First part: intro / before first <h3>
+    if (parts[0] && parts[0].trim().length > 0) {
+      masonryHtml += `<div class="card intro-card"><div class="card-body">${parts[0]}</div></div>`;
+    }
+
+    const isQuiz = sourceFile.name.includes('课堂小测');
+
+    for (let i = 1; i < parts.length; i += 2) {
+      const h3 = parts[i];
+      const contentParts = parts[i + 1] || '';
+      const h3Text = h3.replace(/<[^>]+>/g, '');
+
+      let classes = ['card'];
+      if (isQuiz) classes.push('quiz-card');
+      else classes.push('subject-card');
+
+      if (h3Text.includes('核心句')) classes.push('core-card');
+      if (h3Text.includes('时间线')) classes.push('timeline-card');
+
+      const defaultOpen = isQuiz ? '' : 'open';
+      masonryHtml += `
+        <details class="${classes.join(' ')}" ${defaultOpen}>
+          <summary class="card-header">${h3}</summary>
+          <div class="card-body">${contentParts}</div>
+        </details>`;
+    }
+    masonryHtml += '</div>';
+
     pages.push({
       title,
-      htmlContent: marked.parse(section),
+      htmlContent: masonryHtml,
       filename,
       sourceName: sourceFile.name,
       url,
@@ -68,7 +102,6 @@ for (const sourceFile of filesToProcess) {
 
 // Process search index
 pages.forEach(page => {
-  // Extract paragraphs for search
   const paragraphs = page.markdownContent.split(/\n\s*\n/);
   paragraphs.forEach((p, pIdx) => {
     const text = p.replace(/#+\s+/g, '').replace(/[*_`>]/g, '').trim();
@@ -83,8 +116,7 @@ pages.forEach(page => {
   });
 });
 
-// Write search index
-fs.writeFileSync(path.join(__dirname, 'docs', 'search-index.json'), JSON.stringify(searchIndex));
+fs.writeFileSync(path.join(DOCS_DIR, 'search-index.json'), JSON.stringify(searchIndex));
 
 // Write HTML files
 pages.forEach(page => {
@@ -94,17 +126,16 @@ pages.forEach(page => {
   );
   
   const finalHtml = template
-    .replace('{{TITLE}}', page.title)
-    .replace('{{NAVIGATION}}', activeNavHtml)
-    .replace('{{CONTENT}}', page.htmlContent);
+    .replace(/{{TITLE}}/g, page.title)
+    .replace(/{{NAVIGATION}}/g, activeNavHtml)
+    .replace(/{{CONTENT}}/g, page.htmlContent);
     
-  fs.writeFileSync(path.join(__dirname, 'docs', page.filename), finalHtml);
+  fs.writeFileSync(path.join(DOCS_DIR, page.filename), finalHtml);
 });
 
-// redirect index.html to first page
 if (pages.length > 0) {
   fs.writeFileSync(
-    path.join(__dirname, 'docs', 'index.html'), 
+    path.join(DOCS_DIR, 'index.html'), 
     `<meta http-equiv="refresh" content="0; url=${pages[0].url}" />`
   );
 }

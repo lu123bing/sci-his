@@ -12,7 +12,7 @@
       <div class="sidebar-header">
         <h2>复习导航</h2>
       </div>
-      <div class="search-box">
+      <div class="search-box sticky-search">
         <input type="text" id="search-input" placeholder="搜索知识点...">
         <div id="search-results" class="search-results hidden"></div>
       </div>
@@ -21,11 +21,18 @@
       </ul>
     </nav>
     <main class="content">
+      <div class="top-toolbar">
+         <h1 class="page-title">{{TITLE}}</h1>
+         <div class="toolbar-actions">
+           <button class="btn" onclick="window.toggleDetails(true)">展开全部</button>
+           <button class="btn btn-outline" onclick="window.toggleDetails(false)">折叠全部</button>
+         </div>
+      </div>
       <div class="markdown-body">
         {{CONTENT}}
       </div>
     </main>
   </div>
-  <script src="assets/search.js"></script>
+  <script src="assets/main.js"></script>
 </body>
 </html>
